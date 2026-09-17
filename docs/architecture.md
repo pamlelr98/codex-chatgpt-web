@@ -17,6 +17,43 @@ launcher-owned codex-chatgpt-web daemon
       ChatGPT custom connector
 ```
 
+## Planned Generic API Gateway
+
+The existing Codex bridge remains the production path for Codex and keeps its current routing,
+turn metadata, Turn Capability, broker, tunnel, and MCP behavior unchanged. A separate Generic API
+Gateway is planned as an additive feature for non-Codex clients such as translation applications,
+custom agents, and other OpenAI-compatible consumers.
+
+```text
+Codex app / CLI
+      │
+      ▼
+existing Codex bridge ───────────────┐
+                                     │
+External Client                     │
+      │ OpenAI-compatible API       │
+      ▼                             ▼
+Generic API Gateway ────────── shared ChatGPT Web browser execution
+      ▲
+      │ function calls / results
+      ▼
+External Client tool runtime
+```
+
+The Generic API Gateway is a sibling entrypoint rather than a replacement for the Codex bridge. It
+will listen on a separate local port so changes to the new feature do not alter Codex routing or its
+service lifecycle. Both paths may reuse lower-level ChatGPT Web browser execution components, but
+the Generic API Gateway must not require Codex `turn_id` metadata, Turn Capabilities, or the
+`Codex Native2` MCP connector.
+
+The first protocol milestone is OpenAI Responses compatibility for `/v1/responses`, including
+streaming and function calling. When an External Client supplies tools, the gateway returns model
+function calls to that client. The External Client executes those tools and sends the resulting tool
+outputs back through the API; the gateway does not redirect those calls into the Codex MCP runtime.
+
+See [Generic API Gateway](generic-api-gateway.md) for the planned contract and
+[ADR 0001](adr/0001-add-generic-api-gateway-as-a-sibling-entrypoint.md) for the boundary decision.
+
 ## Modes
 
 ### `browser-only`
